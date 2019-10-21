@@ -29,6 +29,11 @@ LABEL org.opencontainers.image.title="bdwyertech/c7n" \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.build-date=$BUILD_DATE
 
+# Add the ECR Helper Utility
+RUN wget -O /usr/local/bin/docker-credential-ecr-login -q https://github.com/bdwyertech/amazon-ecr-credential-helper/releases/download/bd_update_deps/docker-credential-ecr-login \
+    && (echo '220e318c305f68d8b2c025702757e0f54cbc7d3ff820cb4e38676f12e7b71747  /usr/local/bin/docker-credential-ecr-login' | sha256sum -c) \
+    && chmod +x /usr/local/bin/docker-credential-ecr-login
+
 RUN apk update && apk upgrade \
     && apk add --no-cache bash ca-certificates device-mapper-libs gpgme \
     && adduser skopeo -S -h /home/skopeo
