@@ -1,0 +1,19 @@
+{
+  "auths": {
+    "567898765432.dkr.ecr.us-east-1.amazonaws.com": {},
+    "567898765432.dkr.ecr.us-west-2.amazonaws.com": {},
+    "123456789876.dkr.ecr.us-east-1.amazonaws.com": {},
+    "123456789876.dkr.ecr.us-west-2.amazonaws.com": {},
+    "https://index.docker.io/v1/": {
+      "auth": "abc123456",
+      "email": "craptacular@email.com"
+    }
+  },
+  "credHelpers": {
+    "asia.gcr.io": "gcr",
+    "eu.gcr.io": "gcr",
+    "gcr.io": "gcr",
+    "staging-k8s.gcr.io": "gcr",
+    "us.gcr.io": "gcr"
+  }
+}
