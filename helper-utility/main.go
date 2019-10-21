@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,15 +16,31 @@ import (
 )
 
 func main() {
-	configFile := "/kaniko/.docker/config.json"
-	// configFile := "test/config.json"
-	jsonFile, err := os.Open(configFile)
+	usr, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	configDir := filepath.Join(usr.HomeDir, ".docker")
+	os.MkdirAll(configDir, os.ModePerm)
+
+	configFile := filepath.Join(configDir, "config.json")
+	// configFile := "test/config.json"
+
+	jsonFile, err := os.OpenFile(configFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	cfg, err := gabs.ParseJSON(byteValue)
+	if err != nil {
+		cfg, err = gabs.ParseJSON([]byte(`{}`))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	for _, v := range os.Environ() {
 		if strings.HasPrefix(v, "ECR_LOGIN_") {

@@ -1,4 +1,9 @@
 FROM golang:1.13-alpine
+WORKDIR /go/src/github.com/bdwyertech/docker-skopeo/helper-utility
+COPY helper-utility/ .
+RUN CGO_ENABLED=0 GOFLAGS=-mod=vendor go build .
+
+FROM golang:1.13-alpine
 WORKDIR /go/src/github.com/containers/skopeo
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
@@ -7,9 +12,8 @@ RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgm
     && apk del .build-deps
 
 FROM library/alpine:3.10
-
-COPY --from=0 /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
-
+COPY --from=0 /go/src/github.com/bdwyertech/docker-skopeo/helper-utility/helper-utility /usr/local/bin/
+COPY --from=1 /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
 ARG BUILD_DATE
 ARG VCS_REF
 ARG SKOPEO_VERSION
