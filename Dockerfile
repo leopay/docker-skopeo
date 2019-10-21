@@ -30,4 +30,10 @@ LABEL org.opencontainers.image.title="bdwyertech/c7n" \
       org.label-schema.build-date=$BUILD_DATE
 
 RUN apk update && apk upgrade \
-    && apk add --no-cache bash ca-certificates device-mapper-libs gpgme
+    && apk add --no-cache bash ca-certificates device-mapper-libs gpgme \
+    && adduser skopeo -S -h /home/skopeo
+
+USER skopeo
+WORKDIR /home/skopeo
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["bash"]
