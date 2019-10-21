@@ -8,6 +8,7 @@ hooks/* eol=lf
 
 # Github Linguist (Syntax Highlighting)
 hooks/* linguist-language=bash
+helper-utility/vendor/* linguist-vendored
 Dockerfile* linguist-language=dockerfile
 
 # Gitlab Syntax Highlighting
