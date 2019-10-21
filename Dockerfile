@@ -45,7 +45,8 @@ RUN apk update && apk upgrade \
     && apk add --no-cache bash ca-certificates device-mapper-libs gpgme \
     && adduser skopeo -S -h /home/skopeo
 
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 USER skopeo
 WORKDIR /home/skopeo
-ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["bash"]
