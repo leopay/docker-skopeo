@@ -48,7 +48,7 @@ RUN apk update && apk upgrade \
     && adduser skopeo -S -h /home/skopeo
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT ["docker-entrypoint.sh"]
 USER skopeo
 WORKDIR /home/skopeo
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bash"]
