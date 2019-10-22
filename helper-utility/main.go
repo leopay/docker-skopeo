@@ -79,7 +79,7 @@ func main() {
 	jsonFile.Seek(0, 0)
 	jsonFile.Write([]byte(cfgPretty))
 
-	if v := os.Getenv("KCFG_DEBUG"); len(v) != 0 {
+	if v := os.Getenv("DKRCFG_DEBUG"); len(v) != 0 {
 		log.Printf("DEBUG: Docker Config: %s\n", configFile)
 		log.Println(cfgPretty)
 	}
@@ -87,7 +87,7 @@ func main() {
 
 func getValue(key string) string {
 	val := os.Getenv(key)
-	if v := os.Getenv("KCFG_ENABLE_AWS_PSTORE"); len(v) != 0 {
+	if v := os.Getenv("DKRCFG_ENABLE_AWS_PSTORE"); len(v) != 0 {
 		if strings.HasPrefix(val, "arn:aws:ssm:") {
 			return getParameter(val)
 		}
