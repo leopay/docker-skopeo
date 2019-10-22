@@ -27,19 +27,24 @@ func main() {
 	configFile := filepath.Join(configDir, "config.json")
 	// configFile := "test/config.json"
 
-	jsonFile, err := os.OpenFile(configFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	jsonFile, err := os.OpenFile(configFile, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	cfg, err := gabs.ParseJSON(byteValue)
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
+		log.Fatal(err)
+	}
+	cfg := &gabs.Container{}
+	if len(byteValue) == 0 {
 		cfg, err = gabs.ParseJSON([]byte(`{}`))
-		if err != nil {
-			log.Fatal(err)
-		}
+	} else {
+		cfg, err = gabs.ParseJSON(byteValue)
+	}
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	for _, v := range os.Environ() {
