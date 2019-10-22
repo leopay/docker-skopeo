@@ -37,6 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	cfg := &gabs.Container{}
 	if len(byteValue) == 0 {
 		cfg, err = gabs.ParseJSON([]byte(`{}`))
@@ -74,7 +75,9 @@ func main() {
 
 	cfgPretty := cfg.StringIndent("", "  ")
 
-	ioutil.WriteFile(configFile, []byte(cfgPretty), 0644)
+	jsonFile.Truncate(0)
+	jsonFile.Seek(0, 0)
+	jsonFile.Write([]byte(cfgPretty))
 
 	if v := os.Getenv("KCFG_DEBUG"); len(v) != 0 {
 		log.Printf("DEBUG: Docker Config: %s\n", configFile)
