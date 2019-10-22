@@ -1,24 +1,26 @@
-FROM golang:1.13-alpine
+FROM golang:1.13-alpine as helper
 WORKDIR /go/src/github.com/bdwyertech/docker-skopeo/helper-utility
 COPY helper-utility/ .
 RUN CGO_ENABLED=0 GOFLAGS=-mod=vendor go build .
 
-FROM golang:1.13-alpine
+FROM golang:1.13-alpine as skopeo
+ARG SKOPEO_VERSION='v0.1.39'
 WORKDIR /go/src/github.com/containers/skopeo
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
-    && git clone --single-branch --branch v0.1.39 https://github.com/containers/skopeo.git . \
+    && git clone --single-branch --branch "$SKOPEO_VERSION" https://github.com/containers/skopeo.git . \
     && make binary-local \
     && apk del .build-deps
 
 FROM library/alpine:3.10
-COPY --from=0 /go/src/github.com/bdwyertech/docker-skopeo/helper-utility/helper-utility /usr/local/bin/
-COPY --from=1 /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
+COPY --from=helper /go/src/github.com/bdwyertech/docker-skopeo/helper-utility/helper-utility /usr/local/bin/
+COPY --from=skopeo /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
+
 ARG BUILD_DATE
 ARG VCS_REF
-ARG SKOPEO_VERSION
+ARG SKOPEO_VERSION='v0.1.39'
 
-LABEL org.opencontainers.image.title="bdwyertech/c7n" \
+LABEL org.opencontainers.image.title="bdwyertech/skopeo" \
       org.opencontainers.image.version=$SKOPEO_VERSION \
       org.opencontainers.image.description="For running Skopeo ($SKOPEO_VERSION) within a CI Environment" \
       org.opencontainers.image.authors="Brian Dwyer <bdwyertech@github.com>" \
