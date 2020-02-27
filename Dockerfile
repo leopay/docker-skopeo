@@ -9,7 +9,7 @@ RUN apk add --no-cache --virtual .build-deps git \
     && apk del .build-deps
 
 FROM golang:1.13-alpine as skopeo
-ARG SKOPEO_VERSION='v0.1.40'
+ARG SKOPEO_VERSION='v0.1.41'
 WORKDIR /go/src/github.com/containers/skopeo
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
