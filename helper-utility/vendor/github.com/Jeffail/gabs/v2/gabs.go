@@ -78,7 +78,14 @@ var (
 
 //------------------------------------------------------------------------------
 
-func resolveJSONPointerHierarchy(path string) ([]string, error) {
+// JSONPointerToSlice parses a JSON pointer path
+// (https://tools.ietf.org/html/rfc6901) and returns the path segments as a
+// slice.
+//
+// Because the characters '~' (%x7E) and '/' (%x2F) have special meanings in
+// gabs paths, '~' needs to be encoded as '~0' and '/' needs to be encoded as
+// '~1' when these characters appear in a reference key.
+func JSONPointerToSlice(path string) ([]string, error) {
 	if len(path) < 1 {
 		return nil, errors.New("failed to resolve JSON pointer: path must not be empty")
 	}
@@ -94,7 +101,12 @@ func resolveJSONPointerHierarchy(path string) ([]string, error) {
 	return hierarchy, nil
 }
 
-func resolveJSONDotPathHierarchy(path string) []string {
+// DotPathToSlice returns a slice of path segments parsed out of a dot path.
+//
+// Because the characters '~' (%x7E) and '.' (%x2E) have special meanings in
+// gabs paths, '~' needs to be encoded as '~0' and '.' needs to be encoded as
+// '~1' when these characters appear in a reference key.
+func DotPathToSlice(path string) []string {
 	hierarchy := strings.Split(path, ".")
 	for i, v := range hierarchy {
 		v = strings.Replace(v, "~1", ".", -1)
@@ -180,7 +192,7 @@ func (g *Container) Search(hierarchy ...string) *Container {
 // gabs paths, '~' needs to be encoded as '~0' and '.' needs to be encoded as
 // '~1' when these characters appear in a reference key.
 func (g *Container) Path(path string) *Container {
-	return g.Search(resolveJSONDotPathHierarchy(path)...)
+	return g.Search(DotPathToSlice(path)...)
 }
 
 // JSONPointer parses a JSON pointer path (https://tools.ietf.org/html/rfc6901)
@@ -191,7 +203,7 @@ func (g *Container) Path(path string) *Container {
 // gabs paths, '~' needs to be encoded as '~0' and '/' needs to be encoded as
 // '~1' when these characters appear in a reference key.
 func (g *Container) JSONPointer(path string) (*Container, error) {
-	hierarchy, err := resolveJSONPointerHierarchy(path)
+	hierarchy, err := JSONPointerToSlice(path)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +222,7 @@ func (g *Container) Exists(hierarchy ...string) bool {
 
 // ExistsP checks whether a dot notation path exists.
 func (g *Container) ExistsP(path string) bool {
-	return g.Exists(resolveJSONDotPathHierarchy(path)...)
+	return g.Exists(DotPathToSlice(path)...)
 }
 
 // Index attempts to find and return an element within a JSON array by an index.
@@ -333,7 +345,7 @@ func (g *Container) Set(value interface{}, hierarchy ...string) (*Container, err
 // of the path that do not exist will be constructed, and if a collision occurs
 // with a non object type whilst iterating the path an error is returned.
 func (g *Container) SetP(value interface{}, path string) (*Container, error) {
-	return g.Set(value, resolveJSONDotPathHierarchy(path)...)
+	return g.Set(value, DotPathToSlice(path)...)
 }
 
 // SetIndex attempts to set a value of an array element based on an index.
@@ -352,7 +364,7 @@ func (g *Container) SetIndex(value interface{}, index int) (*Container, error) {
 // (https://tools.ietf.org/html/rfc6901) and sets the leaf to a value. Returns
 // an error if the pointer could not be resolved due to missing fields.
 func (g *Container) SetJSONPointer(value interface{}, path string) (*Container, error) {
-	hierarchy, err := resolveJSONPointerHierarchy(path)
+	hierarchy, err := JSONPointerToSlice(path)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +380,7 @@ func (g *Container) Object(hierarchy ...string) (*Container, error) {
 // ObjectP creates a new JSON object at a target path using dot notation.
 // Returns an error if the path contains a collision with a non object type.
 func (g *Container) ObjectP(path string) (*Container, error) {
-	return g.Object(resolveJSONDotPathHierarchy(path)...)
+	return g.Object(DotPathToSlice(path)...)
 }
 
 // ObjectI creates a new JSON object at an array index. Returns an error if the
@@ -386,7 +398,7 @@ func (g *Container) Array(hierarchy ...string) (*Container, error) {
 // ArrayP creates a new JSON array at a path using dot notation. Returns an
 // error if the path contains a collision with a non object type.
 func (g *Container) ArrayP(path string) (*Container, error) {
-	return g.Array(resolveJSONDotPathHierarchy(path)...)
+	return g.Array(DotPathToSlice(path)...)
 }
 
 // ArrayI creates a new JSON array within an array at an index. Returns an error
@@ -406,7 +418,7 @@ func (g *Container) ArrayOfSize(size int, hierarchy ...string) (*Container, erro
 // dot notation. Returns an error if the path contains a collision with a non
 // object type.
 func (g *Container) ArrayOfSizeP(size int, path string) (*Container, error) {
-	return g.ArrayOfSize(size, resolveJSONDotPathHierarchy(path)...)
+	return g.ArrayOfSize(size, DotPathToSlice(path)...)
 }
 
 // ArrayOfSizeI create a new JSON array of a particular size within an array at
@@ -462,7 +474,7 @@ func (g *Container) Delete(hierarchy ...string) error {
 // DeleteP deletes an element at a path using dot notation, an error is returned
 // if the element does not exist.
 func (g *Container) DeleteP(path string) error {
-	return g.Delete(resolveJSONDotPathHierarchy(path)...)
+	return g.Delete(DotPathToSlice(path)...)
 }
 
 // MergeFn merges two objects using a provided function to resolve collisions.
@@ -567,7 +579,52 @@ func (g *Container) ArrayAppend(value interface{}, hierarchy ...string) error {
 // notation. If the target is not a JSON array then it will be converted into
 // one, with its original contents set to the first element of the array.
 func (g *Container) ArrayAppendP(value interface{}, path string) error {
-	return g.ArrayAppend(value, resolveJSONDotPathHierarchy(path)...)
+	return g.ArrayAppend(value, DotPathToSlice(path)...)
+}
+
+// ArrayConcat attempts to append a value onto a JSON array at a path. If the
+// target is not a JSON array then it will be converted into one, with its
+// original contents set to the first element of the array.
+//
+// ArrayConcat differs from ArrayAppend in that it will expand a value type
+// []interface{} during the append operation, resulting in concatenation of each
+// element, rather than append as a single element of []interface{}.
+func (g *Container) ArrayConcat(value interface{}, hierarchy ...string) error {
+	var array []interface{}
+	if d := g.Search(hierarchy...).Data(); d != nil {
+		if targetArray, ok := d.([]interface{}); !ok {
+			// If the data exists, and it is not a slice of interface,
+			// append it as the first element of our new array.
+			array = append(array, d)
+		} else {
+			// If the data exists, and it is a slice of interface,
+			// assign it to our variable.
+			array = targetArray
+		}
+	}
+
+	switch v := value.(type) {
+	case []interface{}:
+		// If we have been given a slice of interface, expand it when appending.
+		array = append(array, v...)
+	default:
+		array = append(array, v)
+	}
+
+	_, err := g.Set(array, hierarchy...)
+
+	return err
+}
+
+// ArrayConcatP attempts to append a value onto a JSON array at a path using dot
+// notation. If the target is not a JSON array then it will be converted into one,
+// with its original contents set to the first element of the array.
+//
+// ArrayConcatP differs from ArrayAppendP in that it will expand a value type
+// []interface{} during the append operation, resulting in concatenation of each
+// element, rather than append as a single element of []interface{}.
+func (g *Container) ArrayConcatP(value interface{}, path string) error {
+	return g.ArrayConcat(value, DotPathToSlice(path)...)
 }
 
 // ArrayRemove attempts to remove an element identified by an index from a JSON
@@ -592,7 +649,7 @@ func (g *Container) ArrayRemove(index int, hierarchy ...string) error {
 // ArrayRemoveP attempts to remove an element identified by an index from a JSON
 // array at a path using dot notation.
 func (g *Container) ArrayRemoveP(index int, path string) error {
-	return g.ArrayRemove(index, resolveJSONDotPathHierarchy(path)...)
+	return g.ArrayRemove(index, DotPathToSlice(path)...)
 }
 
 // ArrayElement attempts to access an element by an index from a JSON array at a
@@ -614,7 +671,7 @@ func (g *Container) ArrayElement(index int, hierarchy ...string) (*Container, er
 // ArrayElementP attempts to access an element by an index from a JSON array at
 // a path using dot notation.
 func (g *Container) ArrayElementP(index int, path string) (*Container, error) {
-	return g.ArrayElement(index, resolveJSONDotPathHierarchy(path)...)
+	return g.ArrayElement(index, DotPathToSlice(path)...)
 }
 
 // ArrayCount counts the number of elements in a JSON array at a path.
@@ -628,7 +685,63 @@ func (g *Container) ArrayCount(hierarchy ...string) (int, error) {
 // ArrayCountP counts the number of elements in a JSON array at a path using dot
 // notation.
 func (g *Container) ArrayCountP(path string) (int, error) {
-	return g.ArrayCount(resolveJSONDotPathHierarchy(path)...)
+	return g.ArrayCount(DotPathToSlice(path)...)
+}
+
+//------------------------------------------------------------------------------
+
+func walkObject(path string, obj map[string]interface{}, flat map[string]interface{}) {
+	for elePath, v := range obj {
+		if len(path) > 0 {
+			elePath = path + "." + elePath
+		}
+		switch t := v.(type) {
+		case map[string]interface{}:
+			walkObject(elePath, t, flat)
+		case []interface{}:
+			walkArray(elePath, t, flat)
+		default:
+			flat[elePath] = t
+		}
+	}
+}
+
+func walkArray(path string, arr []interface{}, flat map[string]interface{}) {
+	for i, ele := range arr {
+		elePath := strconv.Itoa(i)
+		if len(path) > 0 {
+			elePath = path + "." + elePath
+		}
+		switch t := ele.(type) {
+		case map[string]interface{}:
+			walkObject(elePath, t, flat)
+		case []interface{}:
+			walkArray(elePath, t, flat)
+		default:
+			flat[elePath] = t
+		}
+	}
+}
+
+// Flatten a JSON array or object into an object of key/value pairs for each
+// field, where the key is the full path of the structured field in dot path
+// notation matching the spec for the method Path.
+//
+// E.g. the structure `{"foo":[{"bar":"1"},{"bar":"2"}]}` would flatten into the
+// object: `{"foo.0.bar":"1","foo.1.bar":"2"}`.
+//
+// Returns an error if the target is not a JSON object or array.
+func (g *Container) Flatten() (map[string]interface{}, error) {
+	flattened := map[string]interface{}{}
+	switch t := g.Data().(type) {
+	case map[string]interface{}:
+		walkObject("", t, flattened)
+	case []interface{}:
+		walkArray("", t, flattened)
+	default:
+		return nil, ErrNotObjOrArray
+	}
+	return flattened, nil
 }
 
 //------------------------------------------------------------------------------
@@ -760,6 +873,13 @@ func ParseJSONBuffer(buffer io.Reader) (*Container, error) {
 	}
 
 	return &gabs, nil
+}
+
+// MarshalJSON returns the JSON encoding of this container. This allows
+// structs which contain Container instances to be marshaled using
+// json.Marshal().
+func (g *Container) MarshalJSON() ([]byte, error) {
+	return json.Marshal(g.Data())
 }
 
 //------------------------------------------------------------------------------
