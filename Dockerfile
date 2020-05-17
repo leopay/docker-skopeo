@@ -7,13 +7,7 @@ COPY ecr-scanner/ .
 RUN CGO_ENABLED=0 GOFLAGS=-mod=vendor go build .
 
 FROM golang:1.14-alpine as amazon-ecr-credential-helper
-# BEGIN: DO NOT COMMIT! BR-Proxy Related!
-RUN apk add --no-cache ca-certificates
-ADD mycert.crt /usr/local/share/ca-certificates/mycert.pem
-RUN chmod 644 /usr/local/share/ca-certificates/mycert.pem && update-ca-certificates
-ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
-ENV REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
-# END: DO NOT COMMIT
+
 RUN apk add --no-cache --virtual .build-deps git \
     && CGO_ENABLED=0 GOFLAGS=-mod=vendor go get github.com/awslabs/amazon-ecr-credential-helper/ecr-login/cli/docker-credential-ecr-login \
     && apk del .build-deps
@@ -21,14 +15,6 @@ RUN apk add --no-cache --virtual .build-deps git \
 FROM golang:1.14-alpine as skopeo
 ARG SKOPEO_VERSION='v0.2.0'
 WORKDIR /go/src/github.com/containers/skopeo
-
-# BEGIN: DO NOT COMMIT! BR-Proxy Related!
-RUN apk add --no-cache ca-certificates
-ADD mycert.crt /usr/local/share/ca-certificates/mycert.pem
-RUN chmod 644 /usr/local/share/ca-certificates/mycert.pem && update-ca-certificates
-ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
-ENV REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
-# END: DO NOT COMMIT
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
     && git clone --single-branch --branch "$SKOPEO_VERSION" https://github.com/containers/skopeo.git . \
@@ -44,14 +30,6 @@ COPY --from=amazon-ecr-credential-helper /go/bin/docker-credential-ecr-login /us
 ARG BUILD_DATE
 ARG VCS_REF
 ARG SKOPEO_VERSION='v0.2.0'
-
-# BEGIN: DO NOT COMMIT! BR-Proxy Related!
-RUN apk add --no-cache ca-certificates
-ADD mycert.crt /usr/local/share/ca-certificates/mycert.pem
-RUN chmod 644 /usr/local/share/ca-certificates/mycert.pem && update-ca-certificates
-ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
-ENV REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
-# END: DO NOT COMMIT
 
 LABEL org.opencontainers.image.title="bdwyertech/skopeo" \
       org.opencontainers.image.version=$SKOPEO_VERSION \
