@@ -1,0 +1,9 @@
+---
+severity:
+  - HIGH
+  # - MEDIUM
+  # - LOW
+
+excluded:
+  - CVE-2019-17546
+  # - CVE-2019-1549
