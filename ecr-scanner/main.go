@@ -77,7 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	yamlFile, err := ioutil.ReadFile(path.Join(pwd, "config.yml"))
+	yamlFile, err := ioutil.ReadFile(path.Join(pwd, ".ecr-scanner.yml"))
 	if err != nil {
 		log.Fatal(err)
 	}
