@@ -21,6 +21,10 @@ type ScanConfig struct {
 }
 
 func main() {
+	if v := os.Getenv("ECR_SCANNER_BYPASS"); len(v) != 0 {
+		log.Println("ECR_SCANNER_BYPASS detected... Skipping")
+		os.exit(0)
+	}
 	ecrUrl, err := url.Parse("https://" + os.Args[1])
 	if err != nil {
 		log.Fatal(err)
