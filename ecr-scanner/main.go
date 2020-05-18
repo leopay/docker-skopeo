@@ -25,6 +25,11 @@ func main() {
 		log.Println("ECR_SCANNER_BYPASS detected... Skipping")
 		os.Exit(0)
 	}
+
+	if len(os.Args) <= 1 {
+		log.Fatal("Must supply image to scan as an argument!")
+	}
+
 	ecrUrl, err := url.Parse("https://" + os.Args[1])
 	if err != nil {
 		log.Fatal(err)
