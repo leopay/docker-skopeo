@@ -1,7 +1,7 @@
-# github.com/Jeffail/gabs/v2 v2.5.0
+# github.com/Jeffail/gabs/v2 v2.5.1
 ## explicit
 github.com/Jeffail/gabs/v2
-# github.com/aws/aws-sdk-go v1.30.27
+# github.com/aws/aws-sdk-go v1.31.7
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
