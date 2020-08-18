@@ -5,5 +5,7 @@ severity:
   # - LOW
 
 excluded:
-  - CVE-2019-17546
-  # - CVE-2019-1549
+  - id: CVE-2019-17546
+  - id: CVE-2019-1549
+    expires: 5/16/2020
+    description: This is because XYZ requires ABC, signoff & review by @bdwyertech 5/16/2019

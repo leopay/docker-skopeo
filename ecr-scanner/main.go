@@ -7,9 +7,11 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/araddon/dateparse"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -17,7 +19,11 @@ import (
 
 type ScanConfig struct {
 	Severity []string `yaml:"severity"`
-	Excluded []string `yaml:"excluded"`
+	Excluded []struct {
+		ID          string `yaml:"id"`
+		Expires     string `yaml:"expires,omitempty"`
+		Description string `yaml:"description,omitempty"`
+	} `yaml:"excluded"`
 }
 
 func main() {
@@ -99,18 +105,29 @@ func main() {
 
 	var matching []*ecr.ImageScanFinding
 	for _, finding := range findings {
-		for _, excluded := range scanConfig.Excluded {
-			if *finding.Name == excluded {
-				log.Println("Skipping", excluded)
-				continue
+		func() {
+			for _, excluded := range scanConfig.Excluded {
+				if *finding.Name == excluded.ID {
+					if excluded.Expires != "" {
+						t, err := dateparse.ParseLocal(excluded.Expires)
+						if err != nil {
+							log.Fatal(err)
+						}
+						if time.Now().After(t) {
+							log.Fatal("Exception has expired!", excluded)
+						}
+					}
+					log.Println("Skipping", excluded.ID)
+					return
+				}
 			}
-		}
-		for _, severity := range scanConfig.Severity {
-			if *finding.Severity == severity {
-				matching = append(matching, finding)
-				continue
+			for _, severity := range scanConfig.Severity {
+				if *finding.Severity == severity {
+					matching = append(matching, finding)
+					return
+				}
 			}
-		}
+		}()
 	}
 
 	if len(matching) > 0 {
