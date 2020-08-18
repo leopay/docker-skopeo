@@ -1,8 +1,8 @@
 module github.com/bdwyertech/docker-skopeo/helper-utility
 
-go 1.14
+go 1.15
 
 require (
-	github.com/Jeffail/gabs/v2 v2.5.1
-	github.com/aws/aws-sdk-go v1.31.7
+	github.com/Jeffail/gabs/v2 v2.6.0
+	github.com/aws/aws-sdk-go v1.34.6
 )
