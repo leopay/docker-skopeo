@@ -18,13 +18,13 @@ WORKDIR /go/src/github.com/containers/skopeo
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
     && git clone --single-branch --branch "$SKOPEO_VERSION" https://github.com/containers/skopeo.git . \
-    && make binary-local \
+    && make bin/skopeo \
     && apk del .build-deps
 
 FROM library/alpine:3.12
 COPY --from=helper /go/src/github.com/bdwyertech/docker-skopeo/helper-utility/helper-utility /usr/local/bin/
 COPY --from=helper /go/src/github.com/bdwyertech/docker-skopeo/ecr-scanner/ecr-scanner /usr/local/bin/
-COPY --from=skopeo /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
+COPY --from=skopeo /go/src/github.com/containers/skopeo/bin/skopeo /usr/local/bin/
 COPY --from=amazon-ecr-credential-helper /go/bin/docker-credential-ecr-login /usr/local/bin
 
 ARG BUILD_DATE
