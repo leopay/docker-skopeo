@@ -1,7 +1,7 @@
 # github.com/Jeffail/gabs/v2 v2.6.0
 ## explicit
 github.com/Jeffail/gabs/v2
-# github.com/aws/aws-sdk-go v1.34.6
+# github.com/aws/aws-sdk-go v1.35.29
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -40,5 +40,5 @@ github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/ssm
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
-# github.com/jmespath/go-jmespath v0.3.0
+# github.com/jmespath/go-jmespath v0.4.0
 github.com/jmespath/go-jmespath

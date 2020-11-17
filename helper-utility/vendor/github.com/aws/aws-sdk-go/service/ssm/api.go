@@ -1512,7 +1512,7 @@ func (c *SSM) DeleteInventoryRequest(input *DeleteInventoryInput) (req *request.
 
 // DeleteInventory API operation for Amazon Simple Systems Manager (SSM).
 //
-// Delete a custom inventory type, or the data associated with a custom Inventory
+// Delete a custom inventory type or the data associated with a custom Inventory
 // type. Deleting a custom inventory type is also referred to as deleting a
 // custom inventory schema.
 //
@@ -3707,8 +3707,7 @@ func (c *SSM) DescribeEffectivePatchesForPatchBaselineRequest(input *DescribeEff
 //
 //   * UnsupportedOperatingSystem
 //   The operating systems you specified is not supported, or the operation is
-//   not supported for the operating system. Valid operating systems include:
-//   Windows, AmazonLinux, RedhatEnterpriseLinux, and Ubuntu.
+//   not supported for the operating system.
 //
 //   * InternalServerError
 //   An error occurred on the server side.
@@ -6553,10 +6552,6 @@ func (c *SSM) DescribePatchPropertiesRequest(input *DescribePatchPropertiesInput
 // The following section lists the properties that can be used in filters for
 // each major operating system type:
 //
-// WINDOWS
-//
-// Valid properties: PRODUCT, PRODUCT_FAMILY, CLASSIFICATION, MSRC_SEVERITY
-//
 // AMAZON_LINUX
 //
 // Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
@@ -6565,9 +6560,17 @@ func (c *SSM) DescribePatchPropertiesRequest(input *DescribePatchPropertiesInput
 //
 // Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
 //
-// UBUNTU
+// CENTOS
+//
+// Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
+//
+// DEBIAN
 //
 // Valid properties: PRODUCT, PRIORITY
+//
+// ORACLE_LINUX
+//
+// Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
 //
 // REDHAT_ENTERPRISE_LINUX
 //
@@ -6577,9 +6580,13 @@ func (c *SSM) DescribePatchPropertiesRequest(input *DescribePatchPropertiesInput
 //
 // Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
 //
-// CENTOS
+// UBUNTU
 //
-// Valid properties: PRODUCT, CLASSIFICATION, SEVERITY
+// Valid properties: PRODUCT, PRIORITY
+//
+// WINDOWS
+//
+// Valid properties: PRODUCT, PRODUCT_FAMILY, CLASSIFICATION, MSRC_SEVERITY
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6942,8 +6949,14 @@ func (c *SSM) GetCalendarStateRequest(input *GetCalendarStateInput) (req *reques
 // of the calendar at a specific time, and returns the next time that the Change
 // Calendar state will transition. If you do not specify a time, GetCalendarState
 // assumes the current time. Change Calendar entries have two possible states:
-// OPEN or CLOSED. For more information about Systems Manager Change Calendar,
-// see AWS Systems Manager Change Calendar (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-change-calendar.html)
+// OPEN or CLOSED.
+//
+// If you specify more than one calendar in a request, the command returns the
+// status of OPEN only if all calendars in the request are open. If one or more
+// calendars in the request are closed, the status returned is CLOSED.
+//
+// For more information about Systems Manager Change Calendar, see AWS Systems
+// Manager Change Calendar (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-change-calendar.html)
 // in the AWS Systems Manager User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7315,8 +7328,7 @@ func (c *SSM) GetDeployablePatchSnapshotForInstanceRequest(input *GetDeployableP
 //
 //   * UnsupportedOperatingSystem
 //   The operating systems you specified is not supported, or the operation is
-//   not supported for the operating system. Valid operating systems include:
-//   Windows, AmazonLinux, RedhatEnterpriseLinux, and Ubuntu.
+//   not supported for the operating system.
 //
 //   * UnsupportedFeatureRequiredException
 //   Microsoft application patching is only available on EC2 instances and advanced
@@ -8554,7 +8566,7 @@ func (c *SSM) GetParameterHistoryRequest(input *GetParameterHistoryInput) (req *
 
 // GetParameterHistory API operation for Amazon Simple Systems Manager (SSM).
 //
-// Query a list of all parameters used by the AWS account.
+// Retrieves the history of all changes to a parameter.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -11414,7 +11426,25 @@ func (c *SSM) PutParameterRequest(input *PutParameterInput) (req *request.Reques
 //   The request does not meet the regular expression requirement.
 //
 //   * ParameterMaxVersionLimitExceeded
-//   The parameter exceeded the maximum number of allowed versions.
+//   Parameter Store retains the 100 most recently created versions of a parameter.
+//   After this number of versions has been created, Parameter Store deletes the
+//   oldest version when a new one is created. However, if the oldest version
+//   has a label attached to it, Parameter Store will not delete the version and
+//   instead presents this error message:
+//
+//   An error occurred (ParameterMaxVersionLimitExceeded) when calling the PutParameter
+//   operation: You attempted to create a new version of parameter-name by calling
+//   the PutParameter API with the overwrite flag. Version version-number, the
+//   oldest version, can't be deleted because it has a label associated with it.
+//   Move the label to another version of the parameter, and try again.
+//
+//   This safeguard is to prevent parameter versions with mission critical labels
+//   assigned to them from being deleted. To continue creating new parameters,
+//   first move the label from the oldest version of the parameter to a newer
+//   one for use in your operations. For information about moving parameter labels,
+//   see Move a parameter label (console) (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html#sysman-paramstore-labels-console-move)
+//   or Move a parameter label (CLI) (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html#sysman-paramstore-labels-cli-move)
+//   in the AWS Systems Manager User Guide.
 //
 //   * ParameterPatternMismatchException
 //   The parameter name is not valid.
@@ -12621,7 +12651,9 @@ func (c *SSM) StartSessionRequest(input *StartSessionInput) (req *request.Reques
 //   The specified target instance for the session is not fully configured for
 //   use with Session Manager. For more information, see Getting started with
 //   Session Manager (https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started.html)
-//   in the AWS Systems Manager User Guide.
+//   in the AWS Systems Manager User Guide. This error is also returned if you
+//   attempt to start a session on an instance that is located in a different
+//   account or Region
 //
 //   * InternalServerError
 //   An error occurred on the server side.
@@ -13515,10 +13547,18 @@ func (c *SSM) UpdateMaintenanceWindowTaskRequest(input *UpdateMaintenanceWindowT
 //
 //    * MaxErrors
 //
-// If a parameter is null, then the corresponding field is not modified. Also,
-// if you set Replace to true, then all fields required by the RegisterTaskWithMaintenanceWindow
-// action are required for this request. Optional fields that aren't specified
-// are set to null.
+// If the value for a parameter in UpdateMaintenanceWindowTask is null, then
+// the corresponding field is not modified. If you set Replace to true, then
+// all fields required by the RegisterTaskWithMaintenanceWindow action are required
+// for this request. Optional fields that aren't specified are set to null.
+//
+// When you update a maintenance window task that has options specified in TaskInvocationParameters,
+// you must provide again all the TaskInvocationParameters values that you want
+// to retain. The values you do not specify again are removed. For example,
+// suppose that when you registered a Run Command task, you specified TaskInvocationParameters
+// values for Comment, NotificationConfig, and OutputS3BucketName. If you update
+// the maintenance window task and specify only a different OutputS3BucketName
+// value, the values for Comment and NotificationConfig are removed.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -15257,6 +15297,8 @@ type AssociationFilter struct {
 
 	// The name of the filter.
 	//
+	// InstanceId has been deprecated.
+	//
 	// Key is a required field
 	Key *string `locationName:"key" type:"string" required:"true" enum:"AssociationFilterKey"`
 
@@ -15832,10 +15874,10 @@ type AttachmentsSource struct {
 	// to a document. The format for Value depends on the type of key you specify.
 	//
 	//    * For the key SourceUrl, the value is an S3 bucket location. For example:
-	//    "Values": [ "s3://my-bucket/my-folder" ]
+	//    "Values": [ "s3://doc-example-bucket/my-folder" ]
 	//
 	//    * For the key S3FileUrl, the value is a file in an S3 bucket. For example:
-	//    "Values": [ "s3://my-bucket/my-folder/my-file.py" ]
+	//    "Values": [ "s3://doc-example-bucket/my-folder/my-file.py" ]
 	//
 	//    * For the key AttachmentReference, the value is constructed from the name
 	//    of another SSM document in your account, a version number of that document,
@@ -16256,7 +16298,7 @@ type AutomationExecutionFilter struct {
 
 	// One or more keys to limit the results. Valid filter keys include the following:
 	// DocumentNamePrefix, ExecutionStatus, ExecutionId, ParentExecutionId, CurrentAction,
-	// StartTimeBefore, StartTimeAfter.
+	// StartTimeBefore, StartTimeAfter, TargetResourceGroup.
 	//
 	// Key is a required field
 	Key *string `type:"string" required:"true" enum:"AutomationExecutionFilterKey"`
@@ -17477,13 +17519,13 @@ type CommandPlugin struct {
 	// This was requested when issuing the command. For example, in the following
 	// response:
 	//
-	// test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript
+	// doc-example-bucket/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-02573cafcfEXAMPLE/awsrunShellScript
 	//
-	// test_folder is the name of the S3 bucket;
+	// doc-example-bucket is the name of the S3 bucket;
 	//
 	// ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix is the name of the S3 prefix;
 	//
-	// i-1234567876543 is the instance ID;
+	// i-02573cafcfEXAMPLE is the instance ID;
 	//
 	// awsrunShellScript is the name of the plugin.
 	OutputS3BucketName *string `min:"3" type:"string"`
@@ -17492,13 +17534,13 @@ type CommandPlugin struct {
 	// executions should be stored. This was requested when issuing the command.
 	// For example, in the following response:
 	//
-	// test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript
+	// doc-example-bucket/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-02573cafcfEXAMPLE/awsrunShellScript
 	//
-	// test_folder is the name of the S3 bucket;
+	// doc-example-bucket is the name of the S3 bucket;
 	//
 	// ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix is the name of the S3 prefix;
 	//
-	// i-1234567876543 is the instance ID;
+	// i-02573cafcfEXAMPLE is the instance ID;
 	//
 	// awsrunShellScript is the name of the plugin.
 	OutputS3KeyPrefix *string `type:"string"`
@@ -17749,7 +17791,8 @@ type ComplianceItem struct {
 	// Critical, High, Medium, Low, Informational, Unspecified.
 	Severity *string `type:"string" enum:"ComplianceSeverity"`
 
-	// The status of the compliance item. An item is either COMPLIANT or NON_COMPLIANT.
+	// The status of the compliance item. An item is either COMPLIANT, NON_COMPLIANT,
+	// or an empty string (for Windows patches that aren't applicable).
 	Status *string `type:"string" enum:"ComplianceStatus"`
 
 	// A title for the compliance item. For example, if the compliance item is a
@@ -20140,7 +20183,7 @@ type DeleteInventoryInput struct {
 	_ struct{} `type:"structure"`
 
 	// User-provided idempotency token.
-	ClientToken *string `min:"1" type:"string" idempotencyToken:"true"`
+	ClientToken *string `type:"string" idempotencyToken:"true"`
 
 	// Use this option to view a summary of the deletion request without deleting
 	// any data or the data type. This option is useful when you only want to understand
@@ -20164,7 +20207,7 @@ type DeleteInventoryInput struct {
 	SchemaDeleteOption *string `type:"string" enum:"InventorySchemaDeleteOption"`
 
 	// The name of the custom inventory type for which you want to delete either
-	// all previously collected data, or the inventory type itself.
+	// all previously collected data or the inventory type itself.
 	//
 	// TypeName is a required field
 	TypeName *string `min:"1" type:"string" required:"true"`
@@ -20183,9 +20226,6 @@ func (s DeleteInventoryInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *DeleteInventoryInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "DeleteInventoryInput"}
-	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
-	}
 	if s.TypeName == nil {
 		invalidParams.Add(request.NewErrParamRequired("TypeName"))
 	}
@@ -25057,16 +25097,59 @@ func (s *DocumentIdentifier) SetVersionName(v string) *DocumentIdentifier {
 //
 // For keys, you can specify one or more tags that have been applied to a document.
 //
-// Other valid values include Owner, Name, PlatformTypes, DocumentType, and
-// TargetType.
+// You can also use AWS-provided keys, some of which have specific allowed values.
+// These keys and their associated values are as follows:
+//
+// DocumentType
+//
+//    * ApplicationConfiguration
+//
+//    * ApplicationConfigurationSchema
+//
+//    * Automation
+//
+//    * ChangeCalendar
+//
+//    * Command
+//
+//    * DeploymentStrategy
+//
+//    * Package
+//
+//    * Policy
+//
+//    * Session
+//
+// Owner
 //
 // Note that only one Owner can be specified in a request. For example: Key=Owner,Values=Self.
 //
-// If you use Name as a key, you can use a name prefix to return a list of documents.
-// For example, in the AWS CLI, to return a list of all documents that begin
-// with Te, run the following command:
+//    * Amazon
+//
+//    * Private
+//
+//    * Public
+//
+//    * Self
+//
+//    * ThirdParty
+//
+// PlatformTypes
+//
+//    * Linux
+//
+//    * Windows
+//
+// Name is another AWS-provided key. If you use Name as a key, you can use a
+// name prefix to return a list of documents. For example, in the AWS CLI, to
+// return a list of all documents that begin with Te, run the following command:
 //
 // aws ssm list-documents --filters Key=Name,Values=Te
+//
+// You can also use the TargetType AWS-provided key. For a list of valid resource
+// type values that can be used with this key, see AWS resource and property
+// types reference (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+// in the AWS CloudFormation User Guide.
 //
 // If you specify more than two keys, only documents that are identified by
 // all the tags are returned in the results. If you specify more than two values
@@ -25075,7 +25158,7 @@ func (s *DocumentIdentifier) SetVersionName(v string) *DocumentIdentifier {
 //
 // To specify a custom key and value pair, use the format Key=tag:tagName,Values=valueName.
 //
-// For example, if you created a Key called region and are using the AWS CLI
+// For example, if you created a key called region and are using the AWS CLI
 // to call the list-documents command:
 //
 // aws ssm list-documents --filters Key=tag:region,Values=east,west Key=Owner,Values=Self
@@ -28210,7 +28293,7 @@ type GetParameterHistoryInput struct {
 	// results.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// The name of a parameter you want to query.
+	// The name of the parameter for which you want to review history.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -28396,6 +28479,12 @@ type GetParametersByPathInput struct {
 	NextToken *string `type:"string"`
 
 	// Filters to limit the request results.
+	//
+	// For GetParametersByPath, the following filter Key names are supported: Type,
+	// KeyId, Label, and DataType.
+	//
+	// The following Key values are not supported for GetParametersByPath: tag,
+	// Name, Path, and Tier.
 	ParameterFilters []*ParameterStringFilter `type:"list"`
 
 	// The hierarchy for the parameter. Hierarchies start with a forward slash (/)
@@ -29536,6 +29625,8 @@ type InstanceInformation struct {
 	Name *string `type:"string"`
 
 	// Connection status of SSM Agent.
+	//
+	// The status Inactive has been deprecated and is no longer in use.
 	PingStatus *string `type:"string" enum:"PingStatus"`
 
 	// The name of the operating system platform running on your instance.
@@ -29838,7 +29929,7 @@ type InstancePatchState struct {
 	// instance was rebooted.
 	InstalledPendingRebootCount *int64 `type:"integer"`
 
-	// The number of instances with patches installed that are specified in a RejectedPatches
+	// The number of patches installed on an instance that are specified in a RejectedPatches
 	// list. Patches with a status of InstalledRejected were typically installed
 	// before they were added to a RejectedPatches list.
 	//
@@ -33928,6 +34019,11 @@ type ListAssociationsInput struct {
 	_ struct{} `type:"structure"`
 
 	// One or more filters. Use a filter to return a more specific list of results.
+	//
+	// Filtering associations using the InstanceID attribute only returns legacy
+	// associations created using the InstanceID attribute. Associations targeting
+	// the instance that are part of the Target Attributes ResourceGroup or Tags
+	// are not returned.
 	AssociationFilterList []*AssociationFilter `min:"1" type:"list"`
 
 	// The maximum number of items to return for this call. The call also returns
@@ -35023,7 +35119,7 @@ type ListResourceDataSyncInput struct {
 	NextToken *string `type:"string"`
 
 	// View a list of resource data syncs according to the sync type. Specify SyncToDestination
-	// to view resource data syncs that synchronize data to an Amazon S3 buckets.
+	// to view resource data syncs that synchronize data to an Amazon S3 bucket.
 	// Specify SyncFromSource to view resource data syncs from AWS Organizations
 	// or from multiple AWS Regions.
 	SyncType *string `min:"1" type:"string"`
@@ -36712,7 +36808,7 @@ type OpsAggregator struct {
 	Aggregators []*OpsAggregator `min:"1" type:"list"`
 
 	// The name of an OpsItem attribute on which to limit the count of OpsItems.
-	AttributeName *string `type:"string"`
+	AttributeName *string `min:"1" type:"string"`
 
 	// The aggregator filters.
 	Filters []*OpsFilter `min:"1" type:"list"`
@@ -36742,6 +36838,9 @@ func (s *OpsAggregator) Validate() error {
 	}
 	if s.Aggregators != nil && len(s.Aggregators) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Aggregators", 1))
+	}
+	if s.AttributeName != nil && len(*s.AttributeName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AttributeName", 1))
 	}
 	if s.Filters != nil && len(s.Filters) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Filters", 1))
@@ -38105,7 +38204,25 @@ func (s *ParameterLimitExceeded) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The parameter exceeded the maximum number of allowed versions.
+// Parameter Store retains the 100 most recently created versions of a parameter.
+// After this number of versions has been created, Parameter Store deletes the
+// oldest version when a new one is created. However, if the oldest version
+// has a label attached to it, Parameter Store will not delete the version and
+// instead presents this error message:
+//
+// An error occurred (ParameterMaxVersionLimitExceeded) when calling the PutParameter
+// operation: You attempted to create a new version of parameter-name by calling
+// the PutParameter API with the overwrite flag. Version version-number, the
+// oldest version, can't be deleted because it has a label associated with it.
+// Move the label to another version of the parameter, and try again.
+//
+// This safeguard is to prevent parameter versions with mission critical labels
+// assigned to them from being deleted. To continue creating new parameters,
+// first move the label from the oldest version of the parameter to a newer
+// one for use in your operations. For information about moving parameter labels,
+// see Move a parameter label (console) (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html#sysman-paramstore-labels-console-move)
+// or Move a parameter label (CLI) (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html#sysman-paramstore-labels-cli-move)
+// in the AWS Systems Manager User Guide.
 type ParameterMaxVersionLimitExceeded struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -38394,24 +38511,24 @@ func (s *ParameterPatternMismatchException) RequestID() string {
 }
 
 // One or more filters. Use a filter to return a more specific list of results.
-//
-// The ParameterStringFilter object is used by the DescribeParameters and GetParametersByPath
-// API actions. However, not all of the pattern values listed for Key can be
-// used with both actions.
-//
-// For DescribeActions, all of the listed patterns are valid, with the exception
-// of Label.
-//
-// For GetParametersByPath, the following patterns listed for Key are not valid:
-// Name, Path, and Tier.
-//
-// For examples of CLI commands demonstrating valid parameter filter constructions,
-// see Searching for Systems Manager parameters (https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-search.html)
-// in the AWS Systems Manager User Guide.
 type ParameterStringFilter struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the filter.
+	//
+	// The ParameterStringFilter object is used by the DescribeParameters and GetParametersByPath
+	// API actions. However, not all of the pattern values listed for Key can be
+	// used with both actions.
+	//
+	// For DescribeActions, all of the listed patterns are valid, with the exception
+	// of Label.
+	//
+	// For GetParametersByPath, the following patterns listed for Key are not valid:
+	// tag, Name, Path, and Tier.
+	//
+	// For examples of CLI commands demonstrating valid parameter filter constructions,
+	// see Searching for Systems Manager parameters (https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-search.html)
+	// in the AWS Systems Manager User Guide.
 	//
 	// Key is a required field
 	Key *string `min:"1" type:"string" required:"true"`
@@ -38422,8 +38539,8 @@ type ParameterStringFilter struct {
 	// and OneLevel.)
 	//
 	// For filters used with GetParametersByPath, valid options include Equals and
-	// BeginsWith. (Exception: For filters using the key Label, the only valid option
-	// is Equals.)
+	// BeginsWith. (Exception: For filters using Label as the Key name, the only
+	// valid option is Equals.)
 	Option *string `min:"1" type:"string"`
 
 	// The value you want to search for.
@@ -38653,7 +38770,25 @@ func (s *ParametersFilter) SetValues(v []*string) *ParametersFilter {
 type Patch struct {
 	_ struct{} `type:"structure"`
 
-	// The classification of the patch (for example, SecurityUpdates, Updates, CriticalUpdates).
+	// The Advisory ID of the patch. For example, RHSA-2020:3779. Applies to Linux-based
+	// instances only.
+	AdvisoryIds []*string `type:"list"`
+
+	// The architecture of the patch. For example, in example-pkg-0.710.10-2.7.abcd.x86_64,
+	// the architecture is indicated by x86_64. Applies to Linux-based instances
+	// only.
+	Arch *string `type:"string"`
+
+	// The Bugzilla ID of the patch. For example, 1600646. Applies to Linux-based
+	// instances only.
+	BugzillaIds []*string `type:"list"`
+
+	// The Common Vulnerabilities and Exposures (CVE) ID of the patch. For example,
+	// CVE-1999-0067. Applies to Linux-based instances only.
+	CVEIds []*string `type:"list"`
+
+	// The classification of the patch. For example, SecurityUpdates, Updates, or
+	// CriticalUpdates.
 	Classification *string `type:"string"`
 
 	// The URL where more information can be obtained about the patch.
@@ -38662,36 +38797,65 @@ type Patch struct {
 	// The description of the patch.
 	Description *string `type:"string"`
 
-	// The ID of the patch (this is different than the Microsoft Knowledge Base
-	// ID).
+	// The epoch of the patch. For example in pkg-example-EE-20180914-2.2.amzn1.noarch,
+	// the epoch value is 20180914-2. Applies to Linux-based instances only.
+	Epoch *int64 `type:"integer"`
+
+	// The ID of the patch. Applies to Windows patches only.
+	//
+	// This ID is not the same as the Microsoft Knowledge Base ID.
 	Id *string `min:"1" type:"string"`
 
-	// The Microsoft Knowledge Base ID of the patch.
+	// The Microsoft Knowledge Base ID of the patch. Applies to Windows patches
+	// only.
 	KbNumber *string `type:"string"`
 
 	// The language of the patch if it's language-specific.
 	Language *string `type:"string"`
 
-	// The ID of the MSRC bulletin the patch is related to.
+	// The ID of the Microsoft Security Response Center (MSRC) bulletin the patch
+	// is related to. For example, MS14-045. Applies to Windows patches only.
 	MsrcNumber *string `type:"string"`
 
-	// The severity of the patch (for example Critical, Important, Moderate).
+	// The severity of the patch, such as Critical, Important, or Moderate. Applies
+	// to Windows patches only.
 	MsrcSeverity *string `type:"string"`
 
-	// The specific product the patch is applicable for (for example, WindowsServer2016).
+	// The name of the patch. Applies to Linux-based instances only.
+	Name *string `type:"string"`
+
+	// The specific product the patch is applicable for. For example, WindowsServer2016
+	// or AmazonLinux2018.03.
 	Product *string `type:"string"`
 
-	// The product family the patch is applicable for (for example, Windows).
+	// The product family the patch is applicable for. For example, Windows or Amazon
+	// Linux 2.
 	ProductFamily *string `type:"string"`
+
+	// The particular release of a patch. For example, in pkg-example-EE-20180914-2.2.amzn1.noarch,
+	// the release is 2.amaz1. Applies to Linux-based instances only.
+	Release *string `type:"string"`
 
 	// The date the patch was released.
 	ReleaseDate *time.Time `type:"timestamp"`
+
+	// The source patch repository for the operating system and version, such as
+	// trusty-security for Ubuntu Server 14.04 LTE and focal-security for Ubuntu
+	// Server 20.04 LTE. Applies to Linux-based instances only.
+	Repository *string `type:"string"`
+
+	// The severity level of the patch. For example, CRITICAL or MODERATE.
+	Severity *string `type:"string"`
 
 	// The title of the patch.
 	Title *string `type:"string"`
 
 	// The name of the vendor providing the patch.
 	Vendor *string `type:"string"`
+
+	// The version number of the patch. For example, in example-pkg-1.710.10-2.7.abcd.x86_64,
+	// the version number is indicated by -1. Applies to Linux-based instances only.
+	Version *string `type:"string"`
 }
 
 // String returns the string representation
@@ -38702,6 +38866,30 @@ func (s Patch) String() string {
 // GoString returns the string representation
 func (s Patch) GoString() string {
 	return s.String()
+}
+
+// SetAdvisoryIds sets the AdvisoryIds field's value.
+func (s *Patch) SetAdvisoryIds(v []*string) *Patch {
+	s.AdvisoryIds = v
+	return s
+}
+
+// SetArch sets the Arch field's value.
+func (s *Patch) SetArch(v string) *Patch {
+	s.Arch = &v
+	return s
+}
+
+// SetBugzillaIds sets the BugzillaIds field's value.
+func (s *Patch) SetBugzillaIds(v []*string) *Patch {
+	s.BugzillaIds = v
+	return s
+}
+
+// SetCVEIds sets the CVEIds field's value.
+func (s *Patch) SetCVEIds(v []*string) *Patch {
+	s.CVEIds = v
+	return s
 }
 
 // SetClassification sets the Classification field's value.
@@ -38719,6 +38907,12 @@ func (s *Patch) SetContentUrl(v string) *Patch {
 // SetDescription sets the Description field's value.
 func (s *Patch) SetDescription(v string) *Patch {
 	s.Description = &v
+	return s
+}
+
+// SetEpoch sets the Epoch field's value.
+func (s *Patch) SetEpoch(v int64) *Patch {
+	s.Epoch = &v
 	return s
 }
 
@@ -38752,6 +38946,12 @@ func (s *Patch) SetMsrcSeverity(v string) *Patch {
 	return s
 }
 
+// SetName sets the Name field's value.
+func (s *Patch) SetName(v string) *Patch {
+	s.Name = &v
+	return s
+}
+
 // SetProduct sets the Product field's value.
 func (s *Patch) SetProduct(v string) *Patch {
 	s.Product = &v
@@ -38764,9 +38964,27 @@ func (s *Patch) SetProductFamily(v string) *Patch {
 	return s
 }
 
+// SetRelease sets the Release field's value.
+func (s *Patch) SetRelease(v string) *Patch {
+	s.Release = &v
+	return s
+}
+
 // SetReleaseDate sets the ReleaseDate field's value.
 func (s *Patch) SetReleaseDate(v time.Time) *Patch {
 	s.ReleaseDate = &v
+	return s
+}
+
+// SetRepository sets the Repository field's value.
+func (s *Patch) SetRepository(v string) *Patch {
+	s.Repository = &v
+	return s
+}
+
+// SetSeverity sets the Severity field's value.
+func (s *Patch) SetSeverity(v string) *Patch {
+	s.Severity = &v
 	return s
 }
 
@@ -38779,6 +38997,12 @@ func (s *Patch) SetTitle(v string) *Patch {
 // SetVendor sets the Vendor field's value.
 func (s *Patch) SetVendor(v string) *Patch {
 	s.Vendor = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *Patch) SetVersion(v string) *Patch {
+	s.Version = &v
 	return s
 }
 
@@ -38850,6 +39074,10 @@ func (s *PatchBaselineIdentity) SetOperatingSystem(v string) *PatchBaselineIdent
 type PatchComplianceData struct {
 	_ struct{} `type:"structure"`
 
+	// The IDs of one or more Common Vulnerabilities and Exposure (CVE) issues that
+	// are resolved by the patch.
+	CVEIds *string `type:"string"`
+
 	// The classification of the patch (for example, SecurityUpdates, Updates, CriticalUpdates).
 	//
 	// Classification is a required field
@@ -38893,6 +39121,12 @@ func (s PatchComplianceData) String() string {
 // GoString returns the string representation
 func (s PatchComplianceData) GoString() string {
 	return s.String()
+}
+
+// SetCVEIds sets the CVEIds field's value.
+func (s *PatchComplianceData) SetCVEIds(v string) *PatchComplianceData {
+	s.CVEIds = &v
+	return s
 }
 
 // SetClassification sets the Classification field's value.
@@ -39974,8 +40208,7 @@ type PutParameterInput struct {
 
 	// The type of parameter that you want to add to the system.
 	//
-	// SecureString is not currently supported for AWS CloudFormation templates
-	// or in the China Regions.
+	// SecureString is not currently supported for AWS CloudFormation templates.
 	//
 	// Items in a StringList must be separated by a comma (,). You can't use other
 	// punctuation or special character to escape items in the list. If you have
@@ -39987,6 +40220,9 @@ type PutParameterInput struct {
 
 	// The parameter value that you want to add to the system. Standard parameters
 	// have a value limit of 4 KB. Advanced parameters have a value limit of 8 KB.
+	//
+	// Parameters can't be referenced or nested in the values of other parameters.
+	// You can't include {{}} or {{ssm:parameter-name}} in a parameter value.
 	//
 	// Value is a required field
 	Value *string `type:"string" required:"true"`
@@ -42952,6 +43188,8 @@ type SessionFilter struct {
 	//    with that status. Status values you can specify include: Connected Connecting
 	//    Disconnected Terminated Terminating Failed
 	//
+	//    * SessionId: Specify a session ID to return details about the session.
+	//
 	// Value is a required field
 	Value *string `locationName:"value" min:"1" type:"string" required:"true"`
 }
@@ -44283,7 +44521,9 @@ func (s *TargetLocation) SetTargetLocationMaxErrors(v string) *TargetLocation {
 // The specified target instance for the session is not fully configured for
 // use with Session Manager. For more information, see Getting started with
 // Session Manager (https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started.html)
-// in the AWS Systems Manager User Guide.
+// in the AWS Systems Manager User Guide. This error is also returned if you
+// attempt to start a session on an instance that is located in a different
+// account or Region
 type TargetNotConnected struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -44809,8 +45049,7 @@ func (s *UnsupportedInventorySchemaVersionException) RequestID() string {
 }
 
 // The operating systems you specified is not supported, or the operation is
-// not supported for the operating system. Valid operating systems include:
-// Windows, AmazonLinux, RedhatEnterpriseLinux, and Ubuntu.
+// not supported for the operating system.
 type UnsupportedOperatingSystem struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -46102,7 +46341,7 @@ type UpdateMaintenanceWindowTaskInput struct {
 	// Tasks that have the same priority are scheduled in parallel.
 	Priority *int64 `type:"integer"`
 
-	// If True, then all fields that are required by the RegisterTaskWithMaintenanceWndow
+	// If True, then all fields that are required by the RegisterTaskWithMaintenanceWindow
 	// action are also required for this API request. Optional fields that are not
 	// specified are set to null.
 	Replace *bool `type:"boolean"`
@@ -46131,6 +46370,14 @@ type UpdateMaintenanceWindowTaskInput struct {
 
 	// The parameters that the task should use during execution. Populate only the
 	// fields that match the task type. All other fields should be empty.
+	//
+	// When you update a maintenance window task that has options specified in TaskInvocationParameters,
+	// you must provide again all the TaskInvocationParameters values that you want
+	// to retain. The values you do not specify again are removed. For example,
+	// suppose that when you registered a Run Command task, you specified TaskInvocationParameters
+	// values for Comment, NotificationConfig, and OutputS3BucketName. If you update
+	// the maintenance window task and specify only a different OutputS3BucketName
+	// value, the values for Comment and NotificationConfig are removed.
 	TaskInvocationParameters *MaintenanceWindowTaskInvocationParameters `type:"structure"`
 
 	// The parameters to modify.
@@ -47459,6 +47706,9 @@ const (
 
 	// AutomationExecutionFilterKeyTagKey is a AutomationExecutionFilterKey enum value
 	AutomationExecutionFilterKeyTagKey = "TagKey"
+
+	// AutomationExecutionFilterKeyTargetResourceGroup is a AutomationExecutionFilterKey enum value
+	AutomationExecutionFilterKeyTargetResourceGroup = "TargetResourceGroup"
 )
 
 // AutomationExecutionFilterKey_Values returns all elements of the AutomationExecutionFilterKey enum
@@ -47473,6 +47723,7 @@ func AutomationExecutionFilterKey_Values() []string {
 		AutomationExecutionFilterKeyStartTimeAfter,
 		AutomationExecutionFilterKeyAutomationType,
 		AutomationExecutionFilterKeyTagKey,
+		AutomationExecutionFilterKeyTargetResourceGroup,
 	}
 }
 
@@ -48674,6 +48925,15 @@ func PatchDeploymentStatus_Values() []string {
 }
 
 const (
+	// PatchFilterKeyArch is a PatchFilterKey enum value
+	PatchFilterKeyArch = "ARCH"
+
+	// PatchFilterKeyAdvisoryId is a PatchFilterKey enum value
+	PatchFilterKeyAdvisoryId = "ADVISORY_ID"
+
+	// PatchFilterKeyBugzillaId is a PatchFilterKey enum value
+	PatchFilterKeyBugzillaId = "BUGZILLA_ID"
+
 	// PatchFilterKeyPatchSet is a PatchFilterKey enum value
 	PatchFilterKeyPatchSet = "PATCH_SET"
 
@@ -48686,8 +48946,17 @@ const (
 	// PatchFilterKeyClassification is a PatchFilterKey enum value
 	PatchFilterKeyClassification = "CLASSIFICATION"
 
+	// PatchFilterKeyCveId is a PatchFilterKey enum value
+	PatchFilterKeyCveId = "CVE_ID"
+
+	// PatchFilterKeyEpoch is a PatchFilterKey enum value
+	PatchFilterKeyEpoch = "EPOCH"
+
 	// PatchFilterKeyMsrcSeverity is a PatchFilterKey enum value
 	PatchFilterKeyMsrcSeverity = "MSRC_SEVERITY"
+
+	// PatchFilterKeyName is a PatchFilterKey enum value
+	PatchFilterKeyName = "NAME"
 
 	// PatchFilterKeyPatchId is a PatchFilterKey enum value
 	PatchFilterKeyPatchId = "PATCH_ID"
@@ -48698,22 +48967,44 @@ const (
 	// PatchFilterKeyPriority is a PatchFilterKey enum value
 	PatchFilterKeyPriority = "PRIORITY"
 
+	// PatchFilterKeyRepository is a PatchFilterKey enum value
+	PatchFilterKeyRepository = "REPOSITORY"
+
+	// PatchFilterKeyRelease is a PatchFilterKey enum value
+	PatchFilterKeyRelease = "RELEASE"
+
 	// PatchFilterKeySeverity is a PatchFilterKey enum value
 	PatchFilterKeySeverity = "SEVERITY"
+
+	// PatchFilterKeySecurity is a PatchFilterKey enum value
+	PatchFilterKeySecurity = "SECURITY"
+
+	// PatchFilterKeyVersion is a PatchFilterKey enum value
+	PatchFilterKeyVersion = "VERSION"
 )
 
 // PatchFilterKey_Values returns all elements of the PatchFilterKey enum
 func PatchFilterKey_Values() []string {
 	return []string{
+		PatchFilterKeyArch,
+		PatchFilterKeyAdvisoryId,
+		PatchFilterKeyBugzillaId,
 		PatchFilterKeyPatchSet,
 		PatchFilterKeyProduct,
 		PatchFilterKeyProductFamily,
 		PatchFilterKeyClassification,
+		PatchFilterKeyCveId,
+		PatchFilterKeyEpoch,
 		PatchFilterKeyMsrcSeverity,
+		PatchFilterKeyName,
 		PatchFilterKeyPatchId,
 		PatchFilterKeySection,
 		PatchFilterKeyPriority,
+		PatchFilterKeyRepository,
+		PatchFilterKeyRelease,
 		PatchFilterKeySeverity,
+		PatchFilterKeySecurity,
+		PatchFilterKeyVersion,
 	}
 }
 
@@ -48912,6 +49203,9 @@ const (
 
 	// SessionFilterKeyStatus is a SessionFilterKey enum value
 	SessionFilterKeyStatus = "Status"
+
+	// SessionFilterKeySessionId is a SessionFilterKey enum value
+	SessionFilterKeySessionId = "SessionId"
 )
 
 // SessionFilterKey_Values returns all elements of the SessionFilterKey enum
@@ -48922,6 +49216,7 @@ func SessionFilterKey_Values() []string {
 		SessionFilterKeyTarget,
 		SessionFilterKeyOwner,
 		SessionFilterKeyStatus,
+		SessionFilterKeySessionId,
 	}
 }
 
