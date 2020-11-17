@@ -13,7 +13,7 @@ RUN apk add --no-cache --virtual .build-deps git \
     && apk del .build-deps
 
 FROM golang:1.15-alpine as skopeo
-ARG SKOPEO_VERSION='v1.1.1'
+ARG SKOPEO_VERSION='v1.2.0'
 WORKDIR /go/src/github.com/containers/skopeo
 
 RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgme-dev linux-headers lvm2-dev \
@@ -21,7 +21,7 @@ RUN apk add --no-cache --virtual .build-deps git build-base btrfs-progs-dev gpgm
     && make binary-local \
     && apk del .build-deps
 
-FROM library/alpine:3.11
+FROM library/alpine:3.12
 COPY --from=helper /go/src/github.com/bdwyertech/docker-skopeo/helper-utility/helper-utility /usr/local/bin/
 COPY --from=helper /go/src/github.com/bdwyertech/docker-skopeo/ecr-scanner/ecr-scanner /usr/local/bin/
 COPY --from=skopeo /go/src/github.com/containers/skopeo/skopeo /usr/local/bin/
@@ -29,7 +29,7 @@ COPY --from=amazon-ecr-credential-helper /go/bin/docker-credential-ecr-login /us
 
 ARG BUILD_DATE
 ARG VCS_REF
-ARG SKOPEO_VERSION='v1.1.1'
+ARG SKOPEO_VERSION='v1.2.0'
 
 LABEL org.opencontainers.image.title="bdwyertech/skopeo" \
       org.opencontainers.image.version=$SKOPEO_VERSION \
