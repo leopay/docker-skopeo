@@ -1,7 +1,7 @@
 # github.com/araddon/dateparse v0.0.0-20201001162425-8aadafed4dc4
 ## explicit
 github.com/araddon/dateparse
-# github.com/aws/aws-sdk-go v1.35.29
+# github.com/aws/aws-sdk-go v1.36.26
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -42,6 +42,6 @@ github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/jmespath/go-jmespath v0.4.0
 github.com/jmespath/go-jmespath
-# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
 gopkg.in/yaml.v3
