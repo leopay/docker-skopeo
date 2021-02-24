@@ -1,7 +1,7 @@
 # github.com/araddon/dateparse v0.0.0-20210207001429-0eec95c9db7e
 ## explicit
 github.com/araddon/dateparse
-# github.com/aws/aws-sdk-go v1.37.13
+# github.com/aws/aws-sdk-go v1.37.17
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
